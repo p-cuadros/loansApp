@@ -1,0 +1,67 @@
+version: "3.9"
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: loan-mssql
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Your_password123
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: ["CMD-SHELL", "/bin/bash -c 'sleep 5; /opt/mssql/bin/sqlservr --help >/dev/null 2>&1; exit 0' "]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  backend:
+    build:
+      context: ./backend/src
+      dockerfile: Fundo.Applications.WebApi/Dockerfile
+    container_name: loan-api
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=LoanDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;
+      - LOKI_URL=http://loki:3100
+    ports:
+      - "8080:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    labels:
+      app: loan-api
+      environment: docker
+
+  loki:
+    image: grafana/loki:2.9.8
+    container_name: loki
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+
+  grafana:
+    image: grafana/grafana:10.4.3
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
+    volumes:
+      - ./observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./observability/grafana/dashboards:/etc/grafana/provisioning/dashboards
+
+  frontend:
+    image: node:20-alpine
+    container_name: loan-frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    command: sh -c "npm ci && npm start -- --host 0.0.0.0 --disable-host-check"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - NODE_OPTIONS=--openssl-legacy-provider
+    ports:
+      - "4200:4200"
+    depends_on:
+      - backend
