@@ -35,7 +35,7 @@ jobs:
           dotnet test --collect:"XPlat Code Coverage"
           echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
           reportgenerator "-reports:./*/*/*/coverage.cobertura.xml" "-targetdir:Cobertura" -reporttypes:MarkdownSummary
-          cat Cobertura/summary.md >> $GITHUB_STEP_SUMMARY
+          cat Cobertura/Summary.md >> $GITHUB_STEP_SUMMARY
 
       # dotnet test ./backend/src/Fundo.Services.Tests/Fundo.Services.Tests.csproj \
       #   --configuration Release --no-build --verbosity normal \
