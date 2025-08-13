@@ -5,12 +5,12 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 ## Running the Frontend
 
 Install dependencies:
-```sh
+```pwsh
 npm install
 ```  
 
 Start the development server:  
-```sh
+```pwsh
 npm start
 ```
 
@@ -34,5 +34,7 @@ npm run e2e:ui
 
 Notes
 
-- The app fetches loans from the backend at `http://localhost:8080/loans`.
-- Run `docker compose up --build` from the repo root to start the backend and SQL Server.
+- When running on port 4200, the app points to `http://localhost:8080` for the API.
+- Use the Login screen (admin/admin) before creating loans or making payments.
+- A lightweight metrics post is sent to the backend at `/metrics/http-client` after each request for observability.
+- Run `docker compose up --build` from the repo root to start the backend, SQL Server, Loki, and Grafana.

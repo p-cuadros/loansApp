@@ -10,27 +10,36 @@ To run all tests:
 dotnet test
 ```
 
-To start the main API:  
-```sh
-cd Fundo.Applications.WebApi  
+To start the main API locally without Docker:
+```pwsh
+cd Fundo.Applications.WebApi
 dotnet run
 ```
 
-The following endpoint should return **200 OK**:  
-```http
-GET -> https://localhost:5001/loans
-```
+Default ports when running via Docker Compose:
+- API: http://localhost:8080
+- SQL Server: localhost,1433 (sa/Your_password123)
 
 ### Docker (recommended)
 
 Run the API and SQL Server locally with Docker:
 
-```sh
+```pwsh
 docker compose up --build
 ```
 
 Once the containers are healthy:
 - API: http://localhost:8080/loans
+
+### Authentication
+
+- Login: POST http://localhost:8080/auth/login (admin/admin)
+- Include Authorization: Bearer <token> for POST endpoints on /loans
+
+### Observability
+
+- Logs are sent to console and Loki (if LOKI_URL env set).
+- Grafana: http://localhost:3000, with a simplified metrics dashboard (3 panels) and a logs dashboard.
 
 ## Notes  
 

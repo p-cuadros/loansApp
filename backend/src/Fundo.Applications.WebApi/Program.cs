@@ -18,30 +18,31 @@ namespace Fundo.Applications.WebApi
                 .AddEnvironmentVariables()
                 .Build();
 
-            Log.Logger = new LoggerConfiguration()
+            var loggerConfig = new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration)
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
                 .MinimumLevel.Override("System", LogEventLevel.Warning)
                 .Enrich.FromLogContext()
-                .WriteTo.Console(new Serilog.Formatting.Compact.RenderedCompactJsonFormatter())
-                .CreateLogger();
+                .WriteTo.Console(new Serilog.Formatting.Compact.RenderedCompactJsonFormatter());
 
-            // Optional: Loki sink if LOKI_URL is set
+            // Optional: add Loki sink if LOKI_URL is set, with static labels matching Grafana queries
             var lokiUrl = configuration["LOKI_URL"];
             if (!string.IsNullOrWhiteSpace(lokiUrl))
             {
                 var appName = configuration["APP_NAME"] ?? "loan-api";
                 var environmentName = configuration["ASPNETCORE_ENVIRONMENT"] ?? "Development";
 
-                Log.Logger = new LoggerConfiguration()
-                    .ReadFrom.Configuration(configuration)
-                    .Enrich.FromLogContext()
+                loggerConfig
                     .Enrich.WithProperty("app", appName)
                     .Enrich.WithProperty("environment", environmentName)
-                    .WriteTo.Console(new Serilog.Formatting.Compact.RenderedCompactJsonFormatter())
-                    .WriteTo.GrafanaLoki(lokiUrl)
-                    .CreateLogger();
+                    .WriteTo.GrafanaLoki(
+                        lokiUrl,
+                        propertiesAsLabels: new[] { "app", "environment", "level" },
+                        textFormatter: new Serilog.Formatting.Compact.RenderedCompactJsonFormatter()
+                    );
             }
+
+            Log.Logger = loggerConfig.CreateLogger();
 
             try
             {

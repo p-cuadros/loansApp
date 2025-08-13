@@ -29,6 +29,7 @@ namespace Fundo.Applications.WebApi.Controllers
             using (_logger.BeginScope(new System.Collections.Generic.Dictionary<string, object>
             {
                 ["app"] = "loan-frontend",
+                ["component"] = "frontend",
                 ["correlationId"] = correlationId ?? string.Empty
             }))
             {

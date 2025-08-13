@@ -33,9 +33,9 @@ namespace Fundo.Applications.WebApi
                 options.AddPolicy("AllowAll", builder =>
                     builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             });
-            var jwtKey = _configuration["JWT__Key"] ?? "dev-secret-key-change";
-            var issuer = _configuration["JWT__Issuer"] ?? "loan-api";
-            var audience = _configuration["JWT__Audience"] ?? "loan-ui";
+            var jwtKey = _configuration["JWT:Key"] ?? "dev-secret-key-change-32-bytes-min-123456";
+            var issuer = _configuration["JWT:Issuer"] ?? "loan-api";
+            var audience = _configuration["JWT:Audience"] ?? "loan-ui";
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>

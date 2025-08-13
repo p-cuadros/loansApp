@@ -88,11 +88,25 @@ Candidates are encouraged to include a `README.md` file in their repository deta
 
 How to run locally
 
-- Backend + DB via Docker (recommended):
-    - docker compose up --build
-    - API available at http://localhost:8080/loans
-- Frontend:
-    - Open terminal in frontend folder
-    - npm install
-    - npm start
-    - Open http://localhost:4200 (ensure API_BASE_URL in frontend points to http://localhost:8080)
+- Run with Docker Compose (recommended):
+        - Prerequisites: Docker Desktop running; free ports 8080 (API), 4200 (Frontend), 3000 (Grafana).
+        - From the repository root:
+            - docker compose up --build -d
+        - URLs once up:
+            - API: http://localhost:8080
+            - Frontend: http://localhost:4200
+            - Grafana: http://localhost:3000 (login: admin / admin)
+        - Login credentials (for protected POST endpoints): admin / admin
+        - Quick API test:
+            - PowerShell: Invoke-RestMethod http://localhost:8080/loans -Method GET
+        - Stop the stack:
+            - docker compose down
+        - Troubleshooting:
+            - If Grafana shows no data, generate traffic (browse the app, call GET /loans) and optionally restart Grafana: docker compose restart grafana
+            - After backend code changes, rebuild just the API image: docker compose build backend && docker compose up -d
+
+- Frontend (manual dev mode):
+        - Open terminal in frontend folder
+        - npm install
+        - npm start
+        - Open http://localhost:4200 (targets http://localhost:8080 when running on 4200)

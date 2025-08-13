@@ -129,8 +129,8 @@ export class LoansComponent {
       .pipe(finalize(() => (this.paying[loan.id] = false)))
       .subscribe({
         next: (updated) => {
-          const idx = this.loans.findIndex(l => l.id === loan.id);
-          if (idx >= 0) this.loans[idx] = updated;
+          // Replace immutably to trigger table refresh and status updates
+          this.loans = this.loans.map(l => l.id === loan.id ? updated : l);
           this.paymentAmount[loan.id] = 0;
           this.snack.open('Payment applied', 'OK', { duration: 2000 });
         },

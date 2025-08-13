@@ -30,17 +30,17 @@ namespace Fundo.Applications.WebApi.Controllers
         {
             var correlationId = HttpContext.Items[Middleware.CorrelationIdMiddleware.HeaderName]?.ToString();
             _logger.LogInformation("Login attempt for user {User} CorrelationId={CorrelationId}", req?.Username, correlationId);
-            var user = _config["JWT__User"] ?? "admin";
-            var pass = _config["JWT__Password"] ?? "admin";
+            var user = _config["JWT:User"] ?? "admin";
+            var pass = _config["JWT:Password"] ?? "admin";
             if (string.IsNullOrWhiteSpace(req?.Username) || string.IsNullOrWhiteSpace(req?.Password))
                 return BadRequest(new { error = "bad_request", message = "Missing username or password" });
 
             if (req.Username != user || req.Password != pass)
                 return Unauthorized(new { error = "invalid_credentials", message = "Invalid username or password" });
 
-            var issuer = _config["JWT__Issuer"] ?? "loan-api";
-            var audience = _config["JWT__Audience"] ?? "loan-ui";
-            var key = _config["JWT__Key"] ?? "dev-secret-key-change";
+            var issuer = _config["JWT:Issuer"] ?? "loan-api";
+            var audience = _config["JWT:Audience"] ?? "loan-ui";
+            var key = _config["JWT:Key"] ?? "dev-secret-key-change-32-bytes-min-123456";
             var expires = DateTime.UtcNow.AddHours(1);
 
             var tokenHandler = new JwtSecurityTokenHandler();

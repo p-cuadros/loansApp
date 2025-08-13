@@ -1,104 +1,103 @@
-name: Backend CI
+name: backend-ci
+
 on:
   push:
     branches: [ main ]
 
-permissions:
-  contents: read
-
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
-    env:
-      DOTNET_CLI_TELEMETRY_OPTOUT: 1
-      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-
-    defaults:
-      run:
-        working-directory: backend/src
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET 6
+      - uses: actions/checkout@v4
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.x'
-
-      - name: Cache NuGet packages
+      - name: Cache NuGet
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
-
       - name: Restore
-        run: dotnet restore src.sln
-
+        run: |
+          dotnet restore ./backend/src/Fundo.Applications.WebApi/Fundo.Applications.WebApi.csproj
+          dotnet restore ./backend/src/Fundo.Services.Tests/Fundo.Services.Tests.csproj
       - name: Build
-        run: dotnet build src.sln --configuration Release --no-restore
-
-      - name: Test (with coverage)
-        run: dotnet test Fundo.Services.Tests/Fundo.Services.Tests.csproj --configuration Release --no-build --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test_results.trx"
-
-      - name: Upload test results
-        if: always()
+        run: |
+          dotnet build ./backend/src/Fundo.Applications.WebApi/Fundo.Applications.WebApi.csproj --configuration Release --no-restore
+          dotnet build ./backend/src/Fundo.Services.Tests/Fundo.Services.Tests.csproj --configuration Release --no-restore
+      - name: Test with coverage
+        run: |
+          dotnet test ./backend/src/Fundo.Services.Tests/Fundo.Services.Tests.csproj \
+            --configuration Release --no-build --verbosity normal \
+            /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=TestResults/coverage/ \
+            --logger "trx;LogFileName=test_results.trx"
+      - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
-          path: |
-            backend/src/Fundo.Services.Tests/TestResults/**/test_results.trx
-            backend/src/Fundo.Services.Tests/TestResults/**/coverage.cobertura.xml
-# name: backend-ci
+          name: coverage
+          path: backend/src/Fundo.Services.Tests/TestResults/coverage/coverage.cobertura.xml
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: .NET Tests
+          path: backend/src/Fundo.Services.Tests/**/test_results.trx
+          reporter: dotnet-trx
 
+# name: Backend CI
 # on:
 #   push:
 #     branches: [ main ]
-#   pull_request:
-#     branches: [ main ]
+
+# permissions:
+#   contents: read
 
 # jobs:
 #   build-and-test:
 #     runs-on: ubuntu-latest
+
+#     env:
+#       DOTNET_CLI_TELEMETRY_OPTOUT: 1
+#       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+
+#     defaults:
+#       run:
+#         working-directory: backend/src
+
 #     steps:
-#       - uses: actions/checkout@v4
-#       - name: Setup .NET
+#       - name: Checkout
+#         uses: actions/checkout@v4
+
+#       - name: Setup .NET 6
 #         uses: actions/setup-dotnet@v4
 #         with:
 #           dotnet-version: '6.0.x'
-#       - name: Cache NuGet
+
+#       - name: Cache NuGet packages
 #         uses: actions/cache@v4
 #         with:
 #           path: ~/.nuget/packages
 #           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
 #           restore-keys: |
 #             ${{ runner.os }}-nuget-
+
 #       - name: Restore
-#         run: |
-#           dotnet restore ./backend/src/Fundo.Applications.WebApi/Fundo.Applications.WebApi.csproj
-#           dotnet restore ./backend/src/Fundo.Services.Tests/Fundo.Services.Tests.csproj
+#         run: dotnet restore src.sln
+
 #       - name: Build
-#         run: |
-#           dotnet build ./backend/src/Fundo.Applications.WebApi/Fundo.Applications.WebApi.csproj --configuration Release --no-restore
-#           dotnet build ./backend/src/Fundo.Services.Tests/Fundo.Services.Tests.csproj --configuration Release --no-restore
-#       - name: Test with coverage
-#         run: |
-#           dotnet test ./backend/src/Fundo.Services.Tests/Fundo.Services.Tests.csproj \
-#             --configuration Release --no-build --verbosity normal \
-#             /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=TestResults/coverage/ \
-#             --logger "trx;LogFileName=test_results.trx"
-#       - name: Upload coverage artifact
+#         run: dotnet build src.sln --configuration Release --no-restore
+
+#       - name: Test (with coverage)
+#         run: dotnet test Fundo.Services.Tests/Fundo.Services.Tests.csproj --configuration Release --no-build --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test_results.trx"
+
+#       - name: Upload test results
+#         if: always()
 #         uses: actions/upload-artifact@v4
 #         with:
-#           name: coverage
-#           path: backend/src/Fundo.Services.Tests/TestResults/coverage/coverage.cobertura.xml
-#       - name: Publish test results
-#         uses: dorny/test-reporter@v1
-#         if: always()
-#         with:
-#           name: .NET Tests
-#           path: backend/src/Fundo.Services.Tests/**/test_results.trx
-#           reporter: dotnet-trx
+#           name: test-results
+#           path: |
+#             backend/src/Fundo.Services.Tests/TestResults/**/test_results.trx
+#             backend/src/Fundo.Services.Tests/TestResults/**/coverage.cobertura.xml

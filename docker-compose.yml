@@ -11,7 +11,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "/bin/bash -c 'sleep 5; /opt/mssql/bin/sqlservr --help >/dev/null 2>&1; exit 0' "]
       interval: 10s
-      timeout: 30s
+      timeout: 60s
       retries: 10
   backend:
     build:
@@ -21,9 +21,10 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:8080
       - ASPNETCORE_ENVIRONMENT=Development
+      - APP_NAME=loan-api
       - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=LoanDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;
       - LOKI_URL=http://loki:3100
-      - JWT__Key=dev-secret-key-change
+      - JWT__Key=8f5bf2a1d8e44718b3f0c9c1af4e6b7c2d9e0a1f3b5c7d9e1f2a3b4c5d6e7f8
       - JWT__Issuer=loan-api
       - JWT__Audience=loan-ui
       - JWT__User=admin
