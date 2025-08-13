@@ -29,6 +29,7 @@ jobs:
           dotnet build ./backend/src/Fundo.Services.Tests/Fundo.Services.Tests.csproj --configuration Release --no-restore
       - name: Test with coverage
         run: |
+          cd ./backend/src
           dotnet test --collect:"XPlat Code Coverage"
           dotnet tool install -g dotnet-reportgenerator-globaltool
           ReportGenerator "-reports:./*/*/*/coverage.cobertura.xml" "-targetdir:Cobertura" -reporttypes:HTML

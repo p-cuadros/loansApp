@@ -58,5 +58,33 @@ namespace Fundo.Services.Tests.Unit
             result.Success.Should().BeFalse();
             result.Error.Should().Contain("not found");
         }
+
+        [Fact]
+        public async Task MakePaymentAsync_ShouldReturnBadRequest_WhenAlreadyPaid()
+        {
+            var repo = new Mock<ILoanRepository>();
+            var loan = new Loan { Id = 3, Amount = 1000m, CurrentBalance = 0m, ApplicantName = "A", Status = "paid" };
+            repo.Setup(r => r.GetByIdAsync(3)).ReturnsAsync(loan);
+            IValidator<MakePaymentCommand> validator = new MakePaymentCommandValidator();
+            var svc = new PaymentService(repo.Object, validator);
+
+            var result = await svc.MakePaymentAsync(3, 10m);
+
+            result.Success.Should().BeFalse();
+            result.Error.Should().Contain("already paid");
+        }
+
+        [Fact]
+        public async Task MakePaymentAsync_ShouldThrowValidation_WhenInvalidAmount()
+        {
+            var repo = new Mock<ILoanRepository>();
+            var loan = new Loan { Id = 4, Amount = 1000m, CurrentBalance = 1000m, ApplicantName = "A", Status = "active" };
+            repo.Setup(r => r.GetByIdAsync(4)).ReturnsAsync(loan);
+            IValidator<MakePaymentCommand> validator = new MakePaymentCommandValidator();
+            var svc = new PaymentService(repo.Object, validator);
+
+            var act = async () => await svc.MakePaymentAsync(4, 0m);
+            await act.Should().ThrowAsync<FluentValidation.ValidationException>();
+        }
     }
 }
