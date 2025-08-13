@@ -32,7 +32,15 @@ jobs:
       - name: Test with coverage
         run: |
           cd ./backend/src
-          ReportGenerator "-reports:./*/*/*/coverage.cobertura.xml" "-targetdir:Cobertura" -reporttypes:HTML
+          dotnet test --collect:"XPlat Code Coverage"
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+          reportgenerator "-reports:./*/*/*/coverage.cobertura.xml" "-targetdir:Cobertura" -reporttypes:Html
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: backend/src/Cobertura
       # dotnet test ./backend/src/Fundo.Services.Tests/Fundo.Services.Tests.csproj \
       #   --configuration Release --no-build --verbosity normal \
       #   /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=TestResults/coverage/ \
