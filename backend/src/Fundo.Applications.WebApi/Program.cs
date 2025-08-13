@@ -35,10 +35,15 @@ namespace Fundo.Applications.WebApi
 
                 Log.Logger = new LoggerConfiguration()
                     .ReadFrom.Configuration(configuration)
+                    .Enrich.FromLogContext()
                     .Enrich.WithProperty("app", appName)
                     .Enrich.WithProperty("environment", environmentName)
                     .WriteTo.Console(new Serilog.Formatting.Compact.RenderedCompactJsonFormatter())
-                    .WriteTo.GrafanaLoki(lokiUrl)
+                    .WriteTo.GrafanaLoki(lokiUrl, labels: new[]
+                    {
+                        new LokiLabel("app", appName),
+                        new LokiLabel("environment", environmentName)
+                    }, textFormatter: new Serilog.Formatting.Compact.RenderedCompactJsonFormatter())
                     .CreateLogger();
             }
 

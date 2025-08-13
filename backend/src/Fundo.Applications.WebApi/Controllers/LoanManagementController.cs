@@ -55,8 +55,10 @@ namespace Fundo.Applications.WebApi.Controllers
         public async Task<ActionResult> Create([FromBody] CreateLoanCommand command)
         {
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
+            var correlationId = HttpContext.Items[Middleware.CorrelationIdMiddleware.HeaderName]?.ToString();
+            _logger.LogInformation("Creating loan for {Applicant} amount {Amount} CorrelationId={CorrelationId}", command.ApplicantName, command.Amount, correlationId);
             var loan = await _createLoan.Handle(command);
-            _logger.LogInformation("Created loan {Id} for {Applicant} amount {Amount}", loan.Id, loan.ApplicantName, loan.Amount);
+            _logger.LogInformation("Created loan {Id} for {Applicant} amount {Amount} CorrelationId={CorrelationId}", loan.Id, loan.ApplicantName, loan.Amount, correlationId);
             return CreatedAtAction(nameof(GetById), new { id = loan.Id }, loan);
         }
 
@@ -68,18 +70,20 @@ namespace Fundo.Applications.WebApi.Controllers
         public async Task<ActionResult> MakePayment(int id, [FromBody] PaymentRequest request)
         {
             if (request == null) return BadRequest(new { error = "bad_request", message = "Missing body." });
+            var correlationId = HttpContext.Items[Middleware.CorrelationIdMiddleware.HeaderName]?.ToString();
+            _logger.LogInformation("Attempting payment for loan {Id} amount {Amount} CorrelationId={CorrelationId}", id, request.amount, correlationId);
             var result = await _paymentService.MakePaymentAsync(id, request.amount);
             if (!result.Success)
             {
                 if (result.Error == "Loan not found.")
                 {
-                    _logger.LogWarning("Payment failed. Loan {Id} not found", id);
+                    _logger.LogWarning("Payment failed. Loan {Id} not found CorrelationId={CorrelationId}", id, correlationId);
                     return NotFound(new { error = "not_found", message = result.Error });
                 }
-                _logger.LogWarning("Payment failed for loan {Id}: {Reason}", id, result.Error);
+                _logger.LogWarning("Payment failed for loan {Id}: {Reason} CorrelationId={CorrelationId}", id, result.Error, correlationId);
                 return BadRequest(new { error = "payment_failed", message = result.Error });
             }
-            _logger.LogInformation("Payment applied to loan {Id}", id);
+            _logger.LogInformation("Payment applied to loan {Id} CorrelationId={CorrelationId}", id, correlationId);
             return Ok(result.Data);
         }
     }

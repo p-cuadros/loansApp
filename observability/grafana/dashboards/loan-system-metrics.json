@@ -1,0 +1,168 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Backend Requests (5m)",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({app=\"loan-api\"} |= \"HTTP\" [5m]))",
+          "refId": "A",
+          "queryType": "instant"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "grafana-loki" }
+    },
+    {
+      "type": "graph",
+      "title": "Backend Requests per Minute",
+      "gridPos": { "h": 8, "w": 12, "x": 6, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum by (level) (rate({app=\"loan-api\"} [1m]))",
+          "refId": "A"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "grafana-loki" }
+    },
+    {
+      "type": "stat",
+      "title": "Frontend HTTP Calls (5m)",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({app=\"loan-frontend\"} |= \"http_client metric\" [5m]))",
+          "refId": "A",
+          "queryType": "instant"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "grafana-loki" }
+    },
+    {
+      "type": "table",
+  "title": "Frontend HTTP - Top URLs (15m)",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "options": { "showHeader": true },
+      "targets": [
+        {
+          "expr": "sum by (url) (count_over_time((({app=\\\"loan-api\\\"} |= \\\"http_client metric\\\") | json | label_format url=to_string(Url)) [15m]))",
+          "refId": "A"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "grafana-loki" }
+    },
+    {
+      "type": "graph",
+      "title": "Backend Status Codes (1m)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "sum by (StatusCode) (count_over_time(({app=\"loan-api\"} |= \"HTTP\") | json | unwrap StatusCode [1m]))",
+          "refId": "A"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "grafana-loki" }
+    },
+    {
+      "type": "graph",
+      "title": "Backend Latency p50/p95/p99 (ms)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+  { "expr": "quantile_over_time(0.5, (({app=\\\"loan-api\\\"} |= \\\"HTTP\\\") | json | unwrap Elapsed)[5m])", "refId": "P50" },
+  { "expr": "quantile_over_time(0.95, (({app=\\\"loan-api\\\"} |= \\\"HTTP\\\") | json | unwrap Elapsed)[5m])", "refId": "P95" },
+  { "expr": "quantile_over_time(0.99, (({app=\\\"loan-api\\\"} |= \\\"HTTP\\\") | json | unwrap Elapsed)[5m])", "refId": "P99" }
+      ],
+      "datasource": { "type": "loki", "uid": "grafana-loki" }
+    },
+    {
+      "type": "table",
+      "title": "Backend Top Paths (15m)",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+      "options": { "showHeader": true },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (RequestPath) (count_over_time((({app=\"loan-api\"} |= \"HTTP\") | json) [15m])))",
+          "refId": "A"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "grafana-loki" }
+    },
+    {
+      "type": "stat",
+      "title": "Backend Error Rate (5m)",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 32 },
+      "targets": [
+        {
+          "expr": "sum(count_over_time((({app=\"loan-api\"} |= \"HTTP\") | json | unwrap StatusCode >= 400) [5m])) / sum(count_over_time((({app=\"loan-api\"} |= \"HTTP\") | json) [5m]))",
+          "refId": "A",
+          "queryType": "instant"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "grafana-loki" }
+    },
+    {
+      "type": "graph",
+  "title": "Frontend Methods (1m)",
+      "gridPos": { "h": 8, "w": 9, "x": 6, "y": 32 },
+      "targets": [
+        {
+          "expr": "sum by (method) (count_over_time((({app=\\\"loan-api\\\"} |= \\\"http_client metric\\\") | json | label_format method=to_string(Method)) [1m]))",
+          "refId": "A"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "grafana-loki" }
+    },
+    {
+      "type": "graph",
+  "title": "Frontend Status (1m)",
+      "gridPos": { "h": 8, "w": 9, "x": 15, "y": 32 },
+      "targets": [
+        {
+          "expr": "sum by (status) (count_over_time((({app=\\\"loan-api\\\"} |= \\\"http_client metric\\\") | json | label_format status=to_string(Status)) [1m]))",
+          "refId": "A"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "grafana-loki" }
+    },
+    {
+      "type": "graph",
+  "title": "Frontend Latency (ms)",
+      "gridPos": { "h": 8, "w": 18, "x": 6, "y": 40 },
+      "targets": [
+        {
+          "expr": "avg_over_time((({app=\\\"loan-api\\\"} |= \\\"http_client metric\\\") | json | unwrap DurationMs)[1m])",
+          "refId": "A"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "grafana-loki" }
+    },
+    {
+      "type": "stat",
+  "title": "Frontend p95 Latency (5m)",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 40 },
+      "targets": [
+        {
+          "expr": "quantile_over_time(0.95, (({app=\\\"loan-api\\\"} |= \\\"http_client metric\\\") | json | unwrap DurationMs)[5m])",
+          "refId": "A",
+          "queryType": "instant"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "grafana-loki" }
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["metrics", "loki"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "Loan System Metrics",
+  "version": 2
+}

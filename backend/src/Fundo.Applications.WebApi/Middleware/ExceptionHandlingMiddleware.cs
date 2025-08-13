@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Hosting;
 using System;
 using System.Net;
 using System.Text.Json;
@@ -12,11 +13,13 @@ namespace Fundo.Applications.WebApi.Middleware
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+        private readonly IWebHostEnvironment _env;
 
-        public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+        public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger, IWebHostEnvironment env)
         {
             _next = next;
             _logger = logger;
+            _env = env;
         }
 
         public async Task Invoke(HttpContext context)
@@ -54,12 +57,19 @@ namespace Fundo.Applications.WebApi.Middleware
 
                 context.Response.ContentType = "application/json";
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                var payload = new
-                {
-                    error = "internal_server_error",
-                    message = "An unexpected error occurred.",
-                    correlationId
-                };
+                var payload = _env.EnvironmentName == "Development"
+                    ? new
+                    {
+                        error = "internal_server_error",
+                        message = ex.Message,
+                        correlationId
+                    }
+                    : new
+                    {
+                        error = "internal_server_error",
+                        message = "An unexpected error occurred.",
+                        correlationId
+                    };
                 await context.Response.WriteAsync(JsonSerializer.Serialize(payload));
             }
         }

@@ -18,4 +18,12 @@ export class AuthService {
   get token() {
     return localStorage.getItem('token');
   }
+
+  logout() {
+    localStorage.removeItem('token');
+  }
+
+  get isLoggedIn() {
+    return !!this.token;
+  }
 }

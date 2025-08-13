@@ -5,6 +5,7 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Fundo.Applications.WebApi.Controllers
 {
@@ -13,13 +14,21 @@ namespace Fundo.Applications.WebApi.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IConfiguration _config;
-        public AuthController(IConfiguration config) => _config = config;
+        private readonly Microsoft.Extensions.Logging.ILogger<AuthController> _logger;
+        public AuthController(IConfiguration config, Microsoft.Extensions.Logging.ILogger<AuthController> logger)
+        {
+            _config = config;
+            _logger = logger;
+        }
 
         public record LoginRequest(string Username, string Password);
 
-        [HttpPost("login")]
+    [HttpPost("login")]
+    [AllowAnonymous]
         public IActionResult Login([FromBody] LoginRequest req)
         {
+            var correlationId = HttpContext.Items[Middleware.CorrelationIdMiddleware.HeaderName]?.ToString();
+            _logger.LogInformation("Login attempt for user {User} CorrelationId={CorrelationId}", req?.Username, correlationId);
             var user = _config["JWT__User"] ?? "admin";
             var pass = _config["JWT__Password"] ?? "admin";
             if (string.IsNullOrWhiteSpace(req?.Username) || string.IsNullOrWhiteSpace(req?.Password))
@@ -49,6 +58,7 @@ namespace Fundo.Applications.WebApi.Controllers
             };
             var token = tokenHandler.CreateToken(descriptor);
             var jwt = tokenHandler.WriteToken(token);
+            _logger.LogInformation("Login success for {User} CorrelationId={CorrelationId}", req.Username, correlationId);
             return Ok(new { token = jwt, expiresIn = (int)TimeSpan.FromHours(1).TotalSeconds });
         }
     }
