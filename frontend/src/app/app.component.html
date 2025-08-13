@@ -1,5 +1,6 @@
 <main class="loans">
   <section class="loans--container">
+  <button mat-raised-button color="primary" (click)="login()">Login (admin/admin)</button>
     <h1>Loan Management</h1>
     <table mat-table [dataSource]="loans" class="mat-elevation-z8">
       <ng-container matColumnDef="amount">

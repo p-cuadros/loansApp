@@ -59,6 +59,8 @@ Develop a **lightweight Angular app** to interact with the backend
 ## **Bonus (Optional, Not Required)**
 
 * **Improve error handling and logging** with structured logs.
+    - Backend: Serilog JSON logs, correlation ID middleware (X-Correlation-Id), request logging, and global exception handler returning structured errors with correlationId.
+    - Frontend: HTTP interceptor adds X-Correlation-Id per request and logs structured errors to console; user sees a friendly message.
 * Implement **authentication**.
 * Create a **GitHub Actions** pipeline for building and testing the backend.
 

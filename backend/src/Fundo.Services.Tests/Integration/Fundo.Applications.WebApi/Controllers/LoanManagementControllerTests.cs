@@ -34,6 +34,14 @@ namespace Fundo.Services.Tests.Integration
         [Fact]
         public async Task CreateLoan_ShouldReturnCreated()
         {
+            var login = new StringContent("{\"username\":\"admin\",\"password\":\"admin\"}", System.Text.Encoding.UTF8, "application/json");
+            var loginResp = await _client.PostAsync("/auth/login", login);
+            loginResp.EnsureSuccessStatusCode();
+            var body = await loginResp.Content.ReadAsStringAsync();
+            var token = System.Text.Json.JsonDocument.Parse(body).RootElement.GetProperty("token").GetString();
+
+            _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
             var loanJson = "{\"amount\":1000,\"applicantName\":\"Test User\"}";
             var content = new StringContent(loanJson, System.Text.Encoding.UTF8, "application/json");
             var response = await _client.PostAsync("/loans", content);
@@ -43,6 +51,13 @@ namespace Fundo.Services.Tests.Integration
         [Fact]
         public async Task MakePayment_ShouldReturnOk()
         {
+            var login = new StringContent("{\"username\":\"admin\",\"password\":\"admin\"}", System.Text.Encoding.UTF8, "application/json");
+            var loginResp = await _client.PostAsync("/auth/login", login);
+            loginResp.EnsureSuccessStatusCode();
+            var body = await loginResp.Content.ReadAsStringAsync();
+            var token = System.Text.Json.JsonDocument.Parse(body).RootElement.GetProperty("token").GetString();
+            _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
             var paymentContent = new StringContent("{\"amount\":100}", System.Text.Encoding.UTF8, "application/json");
             var response = await _client.PostAsync("/loans/1/payment", paymentContent);
             Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);

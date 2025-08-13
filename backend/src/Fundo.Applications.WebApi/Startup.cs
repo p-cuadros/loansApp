@@ -12,6 +12,11 @@ using Fundo.Application.UseCases.Loans.Validators;
 using Fundo.Domain.Repositories;
 using Fundo.Domain.Services;
 using Fundo.Domain.Factories;
+using Serilog;
+using Fundo.Applications.WebApi.Middleware;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace Fundo.Applications.WebApi
 {
@@ -28,6 +33,24 @@ namespace Fundo.Applications.WebApi
                 options.AddPolicy("AllowAll", builder =>
                     builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             });
+            var jwtKey = _configuration["JWT__Key"] ?? "dev-secret-key-change";
+            var issuer = _configuration["JWT__Issuer"] ?? "loan-api";
+            var audience = _configuration["JWT__Audience"] ?? "loan-ui";
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = issuer,
+                        ValidAudience = audience,
+                        IssuerSigningKey = key
+                    };
+                });
             services.AddDbContext<LoanDbContext>(options =>
                 options.UseSqlServer(
                     _configuration.GetConnectionString("DefaultConnection")
@@ -45,8 +68,12 @@ namespace Fundo.Applications.WebApi
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseSerilogRequestLogging();
+            app.UseMiddleware<CorrelationIdMiddleware>();
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
             app.UseRouting();
             app.UseCors("AllowAll");
+            app.UseAuthentication();
             app.UseAuthorization();
             app.UseEndpoints(endpoints => endpoints.MapControllers());
             // Ensure database is created and seeded

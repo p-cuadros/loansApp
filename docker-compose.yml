@@ -23,6 +23,11 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=LoanDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;
       - LOKI_URL=http://loki:3100
+      - JWT__Key=dev-secret-key-change
+      - JWT__Issuer=loan-api
+      - JWT__Audience=loan-ui
+      - JWT__User=admin
+      - JWT__Password=admin
     ports:
       - "8080:8080"
     depends_on:
@@ -47,9 +52,9 @@ services:
     depends_on:
       - loki
     volumes:
-      - ./observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ./observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-      - ./observability/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
 
   frontend:
     image: node:20-alpine
@@ -57,7 +62,7 @@ services:
     working_dir: /app
     volumes:
       - ./frontend:/app
-    command: sh -c "npm ci && npm start -- --host 0.0.0.0 --disable-host-check"
+    command: sh -c "npm ci && npm start -- --host 0.0.0.0 --port 4200"
     environment:
       - CHOKIDAR_USEPOLLING=true
       - NODE_OPTIONS=--openssl-legacy-provider
