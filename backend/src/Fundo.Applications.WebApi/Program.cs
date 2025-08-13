@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
@@ -39,18 +39,14 @@ namespace Fundo.Applications.WebApi
                     .Enrich.WithProperty("app", appName)
                     .Enrich.WithProperty("environment", environmentName)
                     .WriteTo.Console(new Serilog.Formatting.Compact.RenderedCompactJsonFormatter())
-                    .WriteTo.GrafanaLoki(lokiUrl, labels: new[]
-                    {
-                        new LokiLabel("app", appName),
-                        new LokiLabel("environment", environmentName)
-                    }, textFormatter: new Serilog.Formatting.Compact.RenderedCompactJsonFormatter())
+                    .WriteTo.GrafanaLoki(lokiUrl)
                     .CreateLogger();
             }
 
             try
             {
                 Log.Information("Starting web host");
-                CreateWebHostBuilder(args).UseSerilog().Build().Run();
+                CreateHostBuilder(args).Build().Run();
             }
             catch (Exception ex)
             {
@@ -62,10 +58,12 @@ namespace Fundo.Applications.WebApi
             }
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args)
-        {
-            return WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>();
-        }
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .UseSerilog()
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.UseStartup<Startup>();
+                });
     }
 }

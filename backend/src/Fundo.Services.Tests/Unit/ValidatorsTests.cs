@@ -16,8 +16,13 @@ namespace Fundo.Services.Tests.Unit
             var good = new CreateLoanCommand { Amount = 10, ApplicantName = "Joe" };
             var bad = new CreateLoanCommand { Amount = 0, ApplicantName = "" };
 
-            validator.TestValidate(good).ShouldNotHaveAnyValidationErrors();
-            validator.TestValidate(bad).ShouldHaveAnyValidationErrors();
+            var goodResult = validator.TestValidate(good);
+            goodResult.ShouldNotHaveValidationErrorFor(x => x.Amount);
+            goodResult.ShouldNotHaveValidationErrorFor(x => x.ApplicantName);
+
+            var badResult = validator.TestValidate(bad);
+            badResult.ShouldHaveValidationErrorFor(x => x.Amount);
+            badResult.ShouldHaveValidationErrorFor(x => x.ApplicantName);
         }
 
         [Fact]
@@ -27,8 +32,13 @@ namespace Fundo.Services.Tests.Unit
             var good = new MakePaymentCommand { LoanId = 1, Amount = 10 };
             var bad = new MakePaymentCommand { LoanId = 0, Amount = 0 };
 
-            validator.TestValidate(good).ShouldNotHaveAnyValidationErrors();
-            validator.TestValidate(bad).ShouldHaveAnyValidationErrors();
+            var goodResult = validator.TestValidate(good);
+            goodResult.ShouldNotHaveValidationErrorFor(x => x.LoanId);
+            goodResult.ShouldNotHaveValidationErrorFor(x => x.Amount);
+
+            var badResult = validator.TestValidate(bad);
+            badResult.ShouldHaveValidationErrorFor(x => x.LoanId);
+            badResult.ShouldHaveValidationErrorFor(x => x.Amount);
         }
     }
 }

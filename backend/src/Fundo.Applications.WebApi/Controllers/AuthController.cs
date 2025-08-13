@@ -6,6 +6,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging;
 
 namespace Fundo.Applications.WebApi.Controllers
 {
@@ -13,9 +14,9 @@ namespace Fundo.Applications.WebApi.Controllers
     [Route("auth")]
     public class AuthController : ControllerBase
     {
-        private readonly IConfiguration _config;
-        private readonly Microsoft.Extensions.Logging.ILogger<AuthController> _logger;
-        public AuthController(IConfiguration config, Microsoft.Extensions.Logging.ILogger<AuthController> logger)
+    private readonly IConfiguration _config;
+    private readonly ILogger<AuthController> _logger;
+    public AuthController(IConfiguration config, ILogger<AuthController> logger)
         {
             _config = config;
             _logger = logger;

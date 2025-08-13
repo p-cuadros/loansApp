@@ -49,7 +49,7 @@ namespace Fundo.Services.Tests.Unit
         public async Task MakePaymentAsync_ShouldReturnNotFound_WhenLoanMissing()
         {
             var repo = new Mock<ILoanRepository>();
-            repo.Setup(r => r.GetByIdAsync(2)).ReturnsAsync((Loan?)null);
+            repo.Setup(r => r.GetByIdAsync(2)).ReturnsAsync((Loan)null);
             IValidator<MakePaymentCommand> validator = new MakePaymentCommandValidator();
             var svc = new PaymentService(repo.Object, validator);
 
