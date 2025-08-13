@@ -1,5 +1,4 @@
-name: backend-ci
-
+name: Backend CI
 on:
   push:
     branches: [ main ]
@@ -30,22 +29,25 @@ jobs:
           dotnet build ./backend/src/Fundo.Services.Tests/Fundo.Services.Tests.csproj --configuration Release --no-restore
       - name: Test with coverage
         run: |
-          dotnet test ./backend/src/Fundo.Services.Tests/Fundo.Services.Tests.csproj \
-            --configuration Release --no-build --verbosity normal \
-            /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=TestResults/coverage/ \
-            --logger "trx;LogFileName=test_results.trx"
-      - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: backend/src/Fundo.Services.Tests/TestResults/coverage/coverage.cobertura.xml
-      - name: Publish test results
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: .NET Tests
-          path: backend/src/Fundo.Services.Tests/**/test_results.trx
-          reporter: dotnet-trx
+          dotnet test --collect:"XPlat Code Coverage"
+          dotnet tool install -g dotnet-reportgenerator-globaltool
+          ReportGenerator "-reports:./*/*/*/coverage.cobertura.xml" "-targetdir:Cobertura" -reporttypes:HTML
+      # dotnet test ./backend/src/Fundo.Services.Tests/Fundo.Services.Tests.csproj \
+      #   --configuration Release --no-build --verbosity normal \
+      #   /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=TestResults/coverage/ \
+      #   --logger "trx;LogFileName=test_results.trx"
+      # - name: Upload coverage artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: coverage
+      #     path: backend/src/Fundo.Services.Tests/TestResults/coverage/coverage.cobertura.xml
+      # - name: Publish test results
+      #   uses: dorny/test-reporter@v1
+      #   if: always()
+      #   with:
+      #     name: .NET Tests
+      #     path: backend/src/Fundo.Services.Tests/**/test_results.trx
+      #     reporter: dotnet-trx
 
 # name: Backend CI
 # on:
