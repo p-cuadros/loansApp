@@ -12,6 +12,8 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.x'
+      - name: Install ReportGenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
       - name: Cache NuGet
         uses: actions/cache@v4
         with:
@@ -30,8 +32,6 @@ jobs:
       - name: Test with coverage
         run: |
           cd ./backend/src
-          dotnet test --collect:"XPlat Code Coverage"
-          dotnet tool install -g dotnet-reportgenerator-globaltool
           ReportGenerator "-reports:./*/*/*/coverage.cobertura.xml" "-targetdir:Cobertura" -reporttypes:HTML
       # dotnet test ./backend/src/Fundo.Services.Tests/Fundo.Services.Tests.csproj \
       #   --configuration Release --no-build --verbosity normal \
