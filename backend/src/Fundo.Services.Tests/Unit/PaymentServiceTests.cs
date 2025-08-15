@@ -17,11 +17,12 @@ namespace Fundo.Services.Tests.Unit
         public async Task MakePaymentAsync_ShouldDecreaseBalance_WhenValid()
         {
             var repo = new Mock<ILoanRepository>();
+            var repoPayment = new Mock<IPaymentRepository>();
             var loan = new Loan { Id = 1, Amount = 1000m, CurrentBalance = 500m, ApplicantName = "A", Status = "active" };
             repo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(loan);
             repo.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
             IValidator<MakePaymentCommand> validator = new MakePaymentCommandValidator();
-            var svc = new PaymentService(repo.Object, validator);
+            var svc = new PaymentService(repo.Object, repoPayment.Object, validator);
 
             var result = await svc.MakePaymentAsync(1, 200m);
 
@@ -34,10 +35,11 @@ namespace Fundo.Services.Tests.Unit
         public async Task MakePaymentAsync_ShouldReturnBadRequest_WhenOverpay()
         {
             var repo = new Mock<ILoanRepository>();
+            var repoPayment = new Mock<IPaymentRepository>();
             var loan = new Loan { Id = 1, Amount = 1000m, CurrentBalance = 500m, ApplicantName = "A", Status = "active" };
             repo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(loan);
             IValidator<MakePaymentCommand> validator = new MakePaymentCommandValidator();
-            var svc = new PaymentService(repo.Object, validator);
+            var svc = new PaymentService(repo.Object, repoPayment.Object, validator);
 
             var result = await svc.MakePaymentAsync(1, 600m);
 
@@ -49,9 +51,10 @@ namespace Fundo.Services.Tests.Unit
         public async Task MakePaymentAsync_ShouldReturnNotFound_WhenLoanMissing()
         {
             var repo = new Mock<ILoanRepository>();
+            var repoPayment = new Mock<IPaymentRepository>();
             repo.Setup(r => r.GetByIdAsync(2)).ReturnsAsync((Loan)null);
             IValidator<MakePaymentCommand> validator = new MakePaymentCommandValidator();
-            var svc = new PaymentService(repo.Object, validator);
+            var svc = new PaymentService(repo.Object, repoPayment.Object, validator);
 
             var result = await svc.MakePaymentAsync(2, 100m);
 
@@ -63,10 +66,11 @@ namespace Fundo.Services.Tests.Unit
         public async Task MakePaymentAsync_ShouldReturnBadRequest_WhenAlreadyPaid()
         {
             var repo = new Mock<ILoanRepository>();
+            var repoPayment = new Mock<IPaymentRepository>();
             var loan = new Loan { Id = 3, Amount = 1000m, CurrentBalance = 0m, ApplicantName = "A", Status = "paid" };
             repo.Setup(r => r.GetByIdAsync(3)).ReturnsAsync(loan);
             IValidator<MakePaymentCommand> validator = new MakePaymentCommandValidator();
-            var svc = new PaymentService(repo.Object, validator);
+            var svc = new PaymentService(repo.Object, repoPayment.Object, validator);
 
             var result = await svc.MakePaymentAsync(3, 10m);
 
@@ -78,10 +82,11 @@ namespace Fundo.Services.Tests.Unit
         public async Task MakePaymentAsync_ShouldThrowValidation_WhenInvalidAmount()
         {
             var repo = new Mock<ILoanRepository>();
+            var repoPayment = new Mock<IPaymentRepository>();
             var loan = new Loan { Id = 4, Amount = 1000m, CurrentBalance = 1000m, ApplicantName = "A", Status = "active" };
             repo.Setup(r => r.GetByIdAsync(4)).ReturnsAsync(loan);
             IValidator<MakePaymentCommand> validator = new MakePaymentCommandValidator();
-            var svc = new PaymentService(repo.Object, validator);
+            var svc = new PaymentService(repo.Object, repoPayment.Object, validator);
 
             var act = async () => await svc.MakePaymentAsync(4, 0m);
             await act.Should().ThrowAsync<FluentValidation.ValidationException>();

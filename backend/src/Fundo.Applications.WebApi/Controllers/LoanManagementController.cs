@@ -15,14 +15,16 @@ namespace Fundo.Applications.WebApi.Controllers
     [Route("loans")]
     public class LoanManagementController : ControllerBase
     {
-    private readonly LoanDbContext _db;
-    private readonly CreateLoanHandler _createLoan;
-    private readonly Fundo.Domain.Services.IPaymentService _paymentService;
-    private readonly ILogger<LoanManagementController> _logger;
-    public LoanManagementController(LoanDbContext db, CreateLoanHandler createLoan, Fundo.Domain.Services.IPaymentService paymentService, ILogger<LoanManagementController> logger)
+        private readonly LoanDbContext _db;
+        private readonly CreateLoanHandler _createLoan;
+        private readonly EditLoanHandler _editLoan;
+        private readonly Fundo.Domain.Services.IPaymentService _paymentService;
+        private readonly ILogger<LoanManagementController> _logger;
+        public LoanManagementController(LoanDbContext db, CreateLoanHandler createLoan, EditLoanHandler editLoan, Fundo.Domain.Services.IPaymentService paymentService, ILogger<LoanManagementController> logger)
         {
             _db = db;
             _createLoan = createLoan;
+            _editLoan = editLoan;
             _paymentService = paymentService;
             _logger = logger;
         }
@@ -50,8 +52,8 @@ namespace Fundo.Applications.WebApi.Controllers
         }
 
         // POST /loans
-    [HttpPost]
-    [Authorize]
+        [HttpPost]
+        [Authorize]
         public async Task<ActionResult> Create([FromBody] CreateLoanCommand command)
         {
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
@@ -65,8 +67,8 @@ namespace Fundo.Applications.WebApi.Controllers
         public class PaymentRequest { public decimal amount { get; set; } }
 
         // POST /loans/{id}/payment
-    [HttpPost("{id}/payment")]
-    [Authorize]
+        [HttpPost("{id}/payment")]
+        [Authorize]
         public async Task<ActionResult> MakePayment(int id, [FromBody] PaymentRequest request)
         {
             if (request == null) return BadRequest(new { error = "bad_request", message = "Missing body." });
@@ -85,6 +87,19 @@ namespace Fundo.Applications.WebApi.Controllers
             }
             _logger.LogInformation("Payment applied to loan {Id} CorrelationId={CorrelationId}", id, correlationId);
             return Ok(result.Data);
+        }
+        
+        // POST /loans/{id}/payment
+        [HttpPut("{id}")]
+        [Authorize]
+        public async Task<ActionResult> EditLoan([FromBody] EditLoanCommand command)
+        {
+            if (!ModelState.IsValid) return ValidationProblem(ModelState);
+            var correlationId = HttpContext.Items[Middleware.CorrelationIdMiddleware.HeaderName]?.ToString();
+            _logger.LogInformation("Editing loan for {Applicant} amount {Amount} CorrelationId={CorrelationId}", command.ApplicantName, command.Amount, correlationId);
+            var loan = await _createLoan.Handle(command);
+            _logger.LogInformation("Created loan {Id} for {Applicant} amount {Amount} CorrelationId={CorrelationId}", loan.Id, loan.ApplicantName, loan.Amount, correlationId);
+            return CreatedAtAction(nameof(GetById), new { id = loan.Id }, loan);
         }
     }
 }

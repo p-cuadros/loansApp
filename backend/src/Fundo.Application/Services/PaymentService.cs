@@ -4,16 +4,20 @@ using FluentValidation;
 using Fundo.Application.UseCases.Loans;
 using Fundo.Application.UseCases.Loans.Validators;
 using Fundo.Domain.Services;
+using Fundo.Domain.Entities;
+using System;
 
 namespace Fundo.Application.Services
 {
     public class PaymentService : IPaymentService
     {
         private readonly ILoanRepository _repo;
+        private readonly IPaymentRepository _repoPayments;
         private readonly IValidator<MakePaymentCommand> _validator;
-        public PaymentService(ILoanRepository repo, IValidator<MakePaymentCommand> validator)
+        public PaymentService(ILoanRepository repo, IPaymentRepository repoPayments, IValidator<MakePaymentCommand> validator)
         {
             _repo = repo;
+            _repoPayments = repoPayments;
             _validator = validator;
         }
 
@@ -28,6 +32,13 @@ namespace Fundo.Application.Services
 
             loan.CurrentBalance -= amount;
             if (loan.CurrentBalance == 0) loan.Status = "paid";
+            var _payment = new Payment()
+            {
+                IdLoan = loanId,
+                DatePayment = DateTime.Now,
+                Amount = amount,
+            };
+            await _repoPayments.AddAsync(_payment);
             await _repo.SaveChangesAsync();
             return PaymentResult.Ok(loan);
         }

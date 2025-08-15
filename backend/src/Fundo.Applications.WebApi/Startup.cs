@@ -59,10 +59,14 @@ namespace Fundo.Applications.WebApi
 
             // Application & Infrastructure DI
             services.AddScoped<ILoanRepository, LoanRepository>();
+            services.AddScoped<IPaymentRepository, PaymentRepository>();
+            services.AddScoped<ILoanHistoryRepository, LoanHistoryRepository>();
             services.AddScoped<CreateLoanHandler>();
+            services.AddScoped<EditLoanHandler>();
             services.AddScoped<ILoanFactory, DefaultLoanFactory>();
             services.AddScoped<IPaymentService, Fundo.Application.Services.PaymentService>();
             services.AddScoped<IValidator<CreateLoanCommand>, CreateLoanCommandValidator>();
+            services.AddScoped<IValidator<EditLoanCommand>, EditLoanCommandValidator>();
             services.AddScoped<IValidator<MakePaymentCommand>, MakePaymentCommandValidator>();
         }
 
