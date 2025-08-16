@@ -14,7 +14,7 @@ namespace Fundo.Application.UseCases.Loans
         private readonly ILoanRepository _repo;
         private readonly ILoanFactory _factory;
         private readonly IValidator<CreateLoanCommand> _validator;
-    private readonly ILogger<CreateLoanHandler> _logger;
+        private readonly ILogger<CreateLoanHandler> _logger;
         public CreateLoanHandler(ILoanRepository repo, ILoanFactory factory, IValidator<CreateLoanCommand> validator, ILogger<CreateLoanHandler> logger)
         {
             _repo = repo;

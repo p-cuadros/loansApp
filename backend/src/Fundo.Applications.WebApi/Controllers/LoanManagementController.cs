@@ -15,14 +15,18 @@ namespace Fundo.Applications.WebApi.Controllers
     [Route("loans")]
     public class LoanManagementController : ControllerBase
     {
-        private readonly LoanDbContext _db;
+    private readonly GetAllLoansQueryHandler _getAllHandler;
+    private readonly GetLoanByIdQueryHandler _getByIdHandler;
+    private readonly GetPaymentsQueryHandler _getPaymentsHandler;
         private readonly CreateLoanHandler _createLoan;
         private readonly EditLoanHandler _editLoan;
         private readonly Fundo.Domain.Services.IPaymentService _paymentService;
         private readonly ILogger<LoanManagementController> _logger;
-        public LoanManagementController(LoanDbContext db, CreateLoanHandler createLoan, EditLoanHandler editLoan, Fundo.Domain.Services.IPaymentService paymentService, ILogger<LoanManagementController> logger)
+        public LoanManagementController(GetAllLoansQueryHandler getAllHandler, GetLoanByIdQueryHandler getByIdHandler, GetPaymentsQueryHandler getPaymentsHandler, CreateLoanHandler createLoan, EditLoanHandler editLoan, Fundo.Domain.Services.IPaymentService paymentService, ILogger<LoanManagementController> logger)
         {
-            _db = db;
+            _getAllHandler = getAllHandler;
+            _getByIdHandler = getByIdHandler;
+            _getPaymentsHandler = getPaymentsHandler;
             _createLoan = createLoan;
             _editLoan = editLoan;
             _paymentService = paymentService;
@@ -33,7 +37,7 @@ namespace Fundo.Applications.WebApi.Controllers
         [HttpGet]
         public async Task<ActionResult> GetAll()
         {
-            var loans = await _db.Loans.ToListAsync();
+            var loans = await _getAllHandler.Handle();
             _logger.LogInformation("Fetched {Count} loans", loans.Count);
             return Ok(loans);
         }
@@ -42,7 +46,7 @@ namespace Fundo.Applications.WebApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult> GetById(int id)
         {
-            var loan = await _db.Loans.FindAsync(id);
+            var loan = await _getByIdHandler.Handle(id);
             if (loan == null)
             {
                 _logger.LogWarning("Loan {Id} not found", id);
@@ -88,6 +92,15 @@ namespace Fundo.Applications.WebApi.Controllers
             _logger.LogInformation("Payment applied to loan {Id} CorrelationId={CorrelationId}", id, correlationId);
             return Ok(result.Data);
         }
+
+            // GET /loans/{id}/payments
+            [HttpGet("{id}/payments")]
+            public async Task<ActionResult> GetPayments(int id)
+            {
+                var payments = await _getPaymentsHandler.Handle(id);
+                if (payments == null || payments.Count == 0) return NotFound(new { error = "not_found", message = "No payments found for this loan." });
+                return Ok(payments);
+            }
         
         // POST /loans/{id}/payment
         [HttpPut("{id}")]
@@ -97,8 +110,8 @@ namespace Fundo.Applications.WebApi.Controllers
             if (!ModelState.IsValid) return ValidationProblem(ModelState);
             var correlationId = HttpContext.Items[Middleware.CorrelationIdMiddleware.HeaderName]?.ToString();
             _logger.LogInformation("Editing loan for {Applicant} amount {Amount} CorrelationId={CorrelationId}", command.ApplicantName, command.Amount, correlationId);
-            var loan = await _createLoan.Handle(command);
-            _logger.LogInformation("Created loan {Id} for {Applicant} amount {Amount} CorrelationId={CorrelationId}", loan.Id, loan.ApplicantName, loan.Amount, correlationId);
+            var loan = await _editLoan.Handle(command);
+            _logger.LogInformation("Edited loan {Id} for {Applicant} amount {Amount} CorrelationId={CorrelationId}", loan.Id, loan.ApplicantName, loan.Amount, correlationId);
             return CreatedAtAction(nameof(GetById), new { id = loan.Id }, loan);
         }
     }

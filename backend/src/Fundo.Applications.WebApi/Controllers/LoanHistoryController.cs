@@ -7,33 +7,34 @@ namespace Fundo.Applications.WebApi.Controllers
 {
     using Fundo.Infrastructure.Data;
     using Fundo.Domain.Entities;
+    using Fundo.Domain.Repositories;
     using Microsoft.EntityFrameworkCore;
     using Fundo.Application.UseCases.Loans;
     using Fundo.Domain.Services;
 
     [ApiController]
-    [Route("payments")]
+    [Route("loanhistory")]
     public class LoanHistoryController : ControllerBase
     {
-    private readonly LoanDbContext _db;
-    private readonly ILogger<LoanManagementController> _logger;
-    public LoanHistoryController(LoanDbContext db, ILogger<LoanManagementController> logger)
+    private readonly GetHistoryQueryHandler _getHistoryHandler;
+    private readonly ILogger<LoanHistoryController> _logger;
+    public LoanHistoryController(GetHistoryQueryHandler getHistoryHandler, ILogger<LoanHistoryController> logger)
         {
-            _db = db;
+            _getHistoryHandler = getHistoryHandler;
             _logger = logger;
         }
 
-        // GET /loans/{id}/payments
+        // GET /loanhistory/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult> GetById(int id)
+        public async Task<ActionResult> GetByLoanId(int id)
         {
-            var payments = await _db.Payments.FindAsync(id);
-            if (payments == null)
+            var history = await _getHistoryHandler.Handle(id);
+            if (history == null || history.Count == 0)
             {
-                _logger.LogWarning("Loan {Id} not found", id);
-                return NotFound(new { error = "not_found", message = "Loan not found." });
+                _logger.LogWarning("No history found for loan {Id}", id);
+                return NotFound(new { error = "not_found", message = "No history found for this loan." });
             }
-            return Ok(payments);
+            return Ok(history);
         }
-   }
+    }
 }

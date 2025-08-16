@@ -16,7 +16,7 @@ namespace Fundo.Application.UseCases.Loans
         private readonly ILoanFactory _factory;
         private readonly IValidator<EditLoanCommand> _validator;
         private readonly ILogger<EditLoanHandler> _logger;
-        public EditLoanHandler(ILoanRepository repo, ILoanHistoryRepository repoHistory, ILoanFactory factory, IValidator<EditLoanCommand> validator, ILogger<CreateLoanHandler> logger)
+        public EditLoanHandler(ILoanRepository repo, ILoanHistoryRepository repoHistory, ILoanFactory factory, IValidator<EditLoanCommand> validator, ILogger<EditLoanHandler> logger)
         {
             _repo = repo;
             _repoHistory = repoHistory;
@@ -26,8 +26,8 @@ namespace Fundo.Application.UseCases.Loans
         }
 
         // Backwards-compatible constructor without explicit logger
-        public EditLoanHandler(ILoanRepository repo, ILoanFactory factory, IValidator<EditLoanCommand> validator)
-            : this(repo, factory, validator, NullLogger<CreateLoanHandler>.Instance)
+        public EditLoanHandler(ILoanRepository repo, ILoanHistoryRepository repoHistory, ILoanFactory factory, IValidator<EditLoanCommand> validator)
+            : this(repo, repoHistory, factory, validator, NullLogger<EditLoanHandler>.Instance)
         {
         }
 
@@ -37,20 +37,20 @@ namespace Fundo.Application.UseCases.Loans
             var _loan = await _repo.GetByIdAsync(command.Id);
             var _history = new LoanHistory()
             {
-                IdLoan = loan.Id,
-                Amount = loan.Amount,
-                CurrentBalance = loan.CurrentBalance,
-                ApplicantName = loan.ApplicantName,
-                Status = loan.Status
+                IdLoan = _loan.Id,
+                Amount = _loan.Amount,
+                CurrentBalance = _loan.CurrentBalance,
+                ApplicantName = _loan.ApplicantName,
+                Status = _loan.Status
             };
             await _repoHistory.AddAsync(_history);
-            _logger.LogInformation("Loan history created with Amoount", loan.amount);
+            _logger.LogInformation("Loan history created with Amount", _loan.Amount);
             _loan.Amount = command.Amount;
             _loan.CurrentBalance = command.CurrentBalance;
             _loan.ApplicantName = command.ApplicantName;
             _loan.Status = command.Status;
             _repo.SaveChangesAsync();
-            _logger.LogInformation("Loan edited with Id {Id}", loan.Id);
+            _logger.LogInformation("Loan edited with Id {Id}", _loan.Id);
             return _loan;
         }
     }

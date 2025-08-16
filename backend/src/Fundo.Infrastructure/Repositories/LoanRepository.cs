@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Fundo.Domain.Repositories;
 using Fundo.Domain.Entities;
 using Fundo.Infrastructure.Data;
@@ -14,6 +15,11 @@ namespace Fundo.Infrastructure.Repositories
         public async Task<Loan?> GetByIdAsync(int id)
         {
             return await _db.Loans.FirstOrDefaultAsync(l => l.Id == id);
+        }
+
+        public async Task<List<Loan>> ListAsync()
+        {
+            return await _db.Loans.ToListAsync();
         }
 
         public async Task AddAsync(Loan loan)

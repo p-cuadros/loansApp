@@ -6,7 +6,7 @@ namespace Fundo.Application.UseCases.Loans.Validators
     {
         public EditLoanCommandValidator()
         {
-            RuleFor(x => x.IdLoan)
+            RuleFor(x => x.Id)
                 .GreaterThan(0).WithMessage("IdLoan must be greater than 0.");
 
             RuleFor(x => x.Amount)

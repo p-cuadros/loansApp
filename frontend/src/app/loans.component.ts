@@ -33,7 +33,7 @@ import { Router } from '@angular/router';
           <button mat-raised-button color="accent" type="submit" [disabled]="creating">Create loan</button>
         </form>
 
-        <table mat-table [dataSource]="loans" class="mat-elevation-z8">
+  <table mat-table [dataSource]="loans" class="mat-elevation-z8">
           <ng-container matColumnDef="amount">
             <th mat-header-cell *matHeaderCellDef>Loan Amount</th>
             <td mat-cell *matCellDef="let element">{{ element.amount | currency }}</td>
@@ -57,13 +57,35 @@ import { Router } from '@angular/router';
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef>Actions</th>
             <td mat-cell *matCellDef="let element">
-              <div *ngIf="element.status === 'active'; else paidBlock" class="pay-action">
+              <div *ngIf="!editing[element.id]">
+                <button mat-button (click)="startEdit(element)">Edit</button>
+                <button mat-button (click)="openDetails(element)">Details</button>
+                <button mat-button (click)="toggleHistory(element)">History</button>
+              </div>
+              <div *ngIf="editing[element.id]" class="edit-row">
+                <input type="text" [(ngModel)]="editModel[element.id].applicantName" />
+                <input type="number" [(ngModel)]="editModel[element.id].amount" />
+                <input type="number" [(ngModel)]="editModel[element.id].currentBalance" />
+                <select [(ngModel)]="editModel[element.id].status">
+                  <option value="active">active</option>
+                  <option value="paid">paid</option>
+                </select>
+                <button mat-button color="primary" (click)="saveEdit(element)">Save</button>
+                <button mat-button (click)="cancelEdit(element)">Cancel</button>
+              </div>
+              <div *ngIf="element.status === 'active' && !editing[element.id]" class="pay-action">
                 <input type="number" placeholder="Amount" min="0.01" step="0.01" [(ngModel)]="paymentAmount[element.id]"/>
                 <button mat-button color="primary" (click)="pay(element)" [disabled]="paying[element.id]">Pay</button>
               </div>
               <ng-template #paidBlock>
                 <span>Paid</span>
               </ng-template>
+              <div *ngIf="histories[element.id]">
+                <h4>History</h4>
+                <ul>
+                  <li *ngFor="let h of histories[element.id]">{{h.amount | currency}} — {{h.applicantName}} — {{h.currentBalance | currency}} — {{h.status}}</li>
+                </ul>
+              </div>
             </td>
           </ng-container>
 
@@ -88,6 +110,9 @@ export class LoansComponent {
 
   displayedColumns: string[] = ['amount', 'currentBalance', 'applicantName', 'status', 'actions'];
   loans: Loan[] = [];
+  editing: Record<number, boolean> = {};
+  editModel: Record<number, { amount: number; currentBalance: number; applicantName: string; status: 'active' | 'paid' }> = {};
+  histories: Record<number, any[]> = {};
   form: CreateLoanRequest = { amount: 0, applicantName: '' };
   paymentAmount: Record<number, number> = {};
   creating = false;
@@ -95,6 +120,10 @@ export class LoansComponent {
 
   constructor() {
     this.load();
+  }
+
+  openDetails(loan: Loan) {
+    this.router.navigate(['/loans', loan.id]);
   }
 
   load() {
@@ -119,6 +148,37 @@ export class LoansComponent {
         next: () => { this.form = { amount: 0, applicantName: '' }; this.load(); this.snack.open('Loan created', 'OK', { duration: 2000 }); },
         error: (err) => this.snack.open(err?.message || 'Failed to create loan', 'Dismiss', { duration: 3500 })
       });
+  }
+
+  startEdit(loan: Loan) {
+    this.editing[loan.id] = true;
+    this.editModel[loan.id] = { amount: loan.amount, currentBalance: loan.currentBalance, applicantName: loan.applicantName, status: loan.status };
+  }
+
+  cancelEdit(loan: Loan) {
+    this.editing[loan.id] = false;
+    delete this.editModel[loan.id];
+  }
+
+  saveEdit(loan: Loan) {
+    const model = this.editModel[loan.id];
+    if (!model) return;
+  const payload = { id: loan.id, amount: Number(model.amount), currentBalance: Number(model.currentBalance), applicantName: (model.applicantName || '').trim(), status: model.status as 'active' | 'paid' };
+    if (!payload.applicantName || !(payload.amount >= 0)) { this.snack.open('Invalid data', 'OK', { duration: 2000 }); return; }
+    this.loanService.update(loan.id, payload).subscribe({
+      next: (updated) => {
+        this.loans = this.loans.map(l => l.id === loan.id ? updated : l);
+        this.editing[loan.id] = false;
+        delete this.editModel[loan.id];
+        this.snack.open('Loan updated', 'OK', { duration: 2000 });
+      },
+      error: (err) => this.snack.open(err?.message || 'Failed to update loan', 'Dismiss', { duration: 3500 })
+    });
+  }
+
+  toggleHistory(loan: Loan) {
+    if (this.histories[loan.id]) { delete this.histories[loan.id]; return; }
+    this.loanService.getHistory(loan.id).subscribe({ next: (h) => this.histories[loan.id] = h, error: () => this.snack.open('Failed to load history', 'OK', { duration: 2000 }) });
   }
 
   pay(loan: Loan) {

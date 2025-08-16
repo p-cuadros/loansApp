@@ -28,50 +28,49 @@
       "datasource": { "type": "loki", "uid": "grafana-loki" }
     },
     {
-      "type": "stat",
-      "title": "Backend Requests (5m)",
-      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "type": "bar gauge",
+      "title": "Status Codes by Endpoint (last 5m)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "targets": [
         {
-          "expr": "sum(count_over_time({app=\"loan-api\"} |= \"HTTP\" [5m]))",
-          "refId": "A",
-          "queryType": "instant"
-        }
-      ],
-      "datasource": { "type": "loki", "uid": "grafana-loki" }
-    },
-    {
-      "type": "graph",
-      "title": "Backend Requests per Minute",
-      "gridPos": { "h": 8, "w": 12, "x": 6, "y": 0 },
-      "targets": [
-        {
-          "expr": "sum by (level) (rate({app=\"loan-api\"} [1m]))",
+          "expr": "sum by (endpoint, status) (count_over_time({app=\"loan-api\"} |= \"HTTP\" [5m]))",
           "refId": "A"
         }
       ],
       "datasource": { "type": "loki", "uid": "grafana-loki" }
     },
     {
-      "type": "stat",
-      "title": "Frontend HTTP Calls (5m)",
-      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "type": "table",
+      "title": "Slowest Endpoints (p95 duration)",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
       "targets": [
         {
-          "expr": "sum(count_over_time({app=\"loan-frontend\"} |= \"http_client metric\" [5m]))",
-          "refId": "A",
-          "queryType": "instant"
+          "expr": "topk(20, quantile_over_time(0.95, {app=\"loan-api\"} |= \"duration=\" [5m]))",
+          "refId": "A"
         }
       ],
       "datasource": { "type": "loki", "uid": "grafana-loki" }
-  }
+    }
   ],
   "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["metrics", "loki"],
-  "templating": { "list": [] },
+  "tags": ["metrics", "loki", "endpoints"],
+  "templating": {
+    "list": [
+      {
+        "name": "endpoint",
+        "type": "query",
+        "label": "Endpoint",
+        "query": "label_values({app=\"loan-api\"} |= \"HTTP\", endpoint)",
+        "datasource": { "type": "loki", "uid": "grafana-loki" },
+        "includeAll": true
+      }
+    ]
+  },
   "time": { "from": "now-1h", "to": "now" },
-  "title": "Loan System Metrics",
-  "version": 2
+  "timepicker": {},
+  "timezone": "",
+  "title": "Loan API - Endpoint Fusion",
+  "version": 1
 }

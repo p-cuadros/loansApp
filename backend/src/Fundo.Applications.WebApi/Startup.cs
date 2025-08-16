@@ -5,11 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Fundo.Infrastructure.Data;
-using Fundo.Infrastructure.Repositories;
-using Fundo.Application.UseCases.Loans;
-using FluentValidation;
-using Fundo.Application.UseCases.Loans.Validators;
-using Fundo.Domain.Repositories;
 using Fundo.Domain.Services;
 using Fundo.Domain.Factories;
 using Serilog;
@@ -17,6 +12,11 @@ using Fundo.Applications.WebApi.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Fundo.Infrastructure.Repositories;
+using Fundo.Domain.Repositories;
+using Fundo.Application.UseCases.Loans;
+using Fundo.Application.UseCases.Loans.Validators;
+using FluentValidation;
 
 namespace Fundo.Applications.WebApi
 {
@@ -63,6 +63,10 @@ namespace Fundo.Applications.WebApi
             services.AddScoped<ILoanHistoryRepository, LoanHistoryRepository>();
             services.AddScoped<CreateLoanHandler>();
             services.AddScoped<EditLoanHandler>();
+            services.AddScoped<GetAllLoansQueryHandler>();
+            services.AddScoped<GetLoanByIdQueryHandler>();
+            services.AddScoped<GetPaymentsQueryHandler>();
+            services.AddScoped<GetHistoryQueryHandler>();
             services.AddScoped<ILoanFactory, DefaultLoanFactory>();
             services.AddScoped<IPaymentService, Fundo.Application.Services.PaymentService>();
             services.AddScoped<IValidator<CreateLoanCommand>, CreateLoanCommandValidator>();
